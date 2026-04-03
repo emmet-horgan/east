@@ -1,0 +1,8 @@
+[workspace]
+name = "east-test"
+version = "0.1.0"
+
+[modules]
+zephyr = { git = "https://github.com/zephyrproject-rtos/zephyr.git", rev = "zephyr-v3.5.0" }
+hal-adi = { git = "https://github.com/zephyrproject-rtos/hal_adi.git", rev = "44545c0b31a765c702132f22e797271c3f111eae" }
+mbedtls = { git = "https://github.com/zephyrproject-rtos/mbedtls.git", rev = "93344a458295c891f71fe31beaa3a3a8d8057790" }
