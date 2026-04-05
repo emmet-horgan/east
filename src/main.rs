@@ -1,11 +1,12 @@
 use anyhow::Context;
 use clap::{Parser, Subcommand};
 
-use std::{env, io::Write};
+use std::env;
 
 mod config;
 mod lock;
 mod init;
+mod west;
 
 #[derive(Debug, Parser)]
 #[command(name = "east")]
@@ -28,8 +29,6 @@ fn main() -> anyhow::Result<()> {
                 .context("could not find the current directory")?;
             let lock = init::init(&cwd)
                 .context("initialization was not successful")?;
-            let mut file = std::fs::File::create(cwd.join("east.lock"))
-                .context("failed to create lock file")?;
             let lock_content = toml::to_string_pretty(&lock)
                 .context("failed to serialize lock file content")?;
             std::fs::write(
