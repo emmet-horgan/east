@@ -4,10 +4,12 @@ use serde::Deserialize;
 use semver::Version;
 use url::Url;
 
+use crate::manifest::{UnresolvedManifest, UnresolvedDep, ImportSpec};
+
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    workspace: Workspace,
-    modules: BTreeMap<String, Module>
+    pub(crate) workspace: Workspace,
+    pub(crate) modules: BTreeMap<String, Module>
 }
 
 impl Config {
@@ -17,6 +19,31 @@ impl Config {
 
     pub fn workspace(&self) -> &Workspace {
         &self.workspace
+    }
+
+    /// Lower an east.toml into the common `UnresolvedManifest` IR.
+    pub fn into_unresolved(&self) -> UnresolvedManifest {
+        let deps = self
+            .modules
+            .iter()
+            .map(|(name, m)| {
+                let dep = UnresolvedDep {
+                    name: name.clone(),
+                    url: m.git.clone(),
+                    revision: m.rev.clone(),
+                    path: name.clone(),
+                    import: ImportSpec::None, // east.toml is already flat
+                };
+                (name.clone(), dep)
+            })
+            .collect();
+
+        UnresolvedManifest {
+            self_url: None,
+            self_revision: None,
+            self_import: ImportSpec::None,
+            deps,
+        }
     }
 }
 
@@ -47,7 +74,8 @@ impl Workspace {
 #[derive(Debug, Deserialize)]
 pub struct Module {
     git: Url,
-    rev: String
+    rev: String,
+    import: ImportSpec
 }
 
 impl Module {
@@ -57,5 +85,9 @@ impl Module {
 
     pub fn rev(&self) -> &str {
         &self.rev
+    }
+
+    pub fn new(git: Url, rev: String, import: ImportSpec) -> Self {
+        Self { git, rev, import }
     }
 }

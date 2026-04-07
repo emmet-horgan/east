@@ -146,6 +146,7 @@ dependencies = [
  "anyhow",
  "clap",
  "git2",
+ "log",
  "semver",
  "serde",
  "serde_yaml",

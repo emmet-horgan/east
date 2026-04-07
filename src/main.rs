@@ -7,6 +7,8 @@ mod config;
 mod lock;
 mod init;
 mod west;
+mod resolve;
+mod fetch_git2;
 
 #[derive(Debug, Parser)]
 #[command(name = "east")]
