@@ -75,7 +75,6 @@ impl Workspace {
 pub struct Module {
     git: Url,
     rev: String,
-    import: ImportSpec
 }
 
 impl Module {
@@ -87,7 +86,7 @@ impl Module {
         &self.rev
     }
 
-    pub fn new(git: Url, rev: String, import: ImportSpec) -> Self {
-        Self { git, rev, import }
+    pub fn new(git: Url, rev: String) -> Self {
+        Self { git, rev }
     }
 }

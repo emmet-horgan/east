@@ -9,6 +9,9 @@ mod init;
 mod west;
 mod resolve;
 mod fetch_git2;
+mod dep;
+mod resolver;
+mod manifest;
 
 #[derive(Debug, Parser)]
 #[command(name = "east")]

@@ -14,7 +14,7 @@ pub struct FetchRequest {
 #[derive(Debug, thiserror::Error)]
 pub enum ResolveError {
     #[error("fetch failed for {url} @ {rev}, path {path}: {reason}")]
-    FetchFailed { url: String, rev: String, path: PathBuf, reason: String },
+    FetchFailed { url: String, rev: String, path: String, reason: String },
     #[error("parse error in {url} @ {rev}, path {path}: {reason}")]
     ParseError { url: String, rev: String, path: String, reason: String },
     #[error("cycle detected: {0}")]

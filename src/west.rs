@@ -228,6 +228,7 @@ impl West {
                 None => self.manifest.defaults.revision.clone()
 
             };
+            // TODO: fix import
             if let Some(_) = modules.insert(prj.name.clone(), Module::new(url, rev)) {
                 return Err(WestError::DuplicatePrjError { prj: prj.name.clone() })
             }
