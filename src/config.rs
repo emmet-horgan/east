@@ -4,7 +4,7 @@ use serde::Deserialize;
 use semver::Version;
 use url::Url;
 
-use crate::manifest::{UnresolvedManifest, UnresolvedDep, ImportSpec};
+//use crate::manifest::{UnresolvedManifest, UnresolvedDep, ImportSpec};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -21,30 +21,30 @@ impl Config {
         &self.workspace
     }
 
-    /// Lower an east.toml into the common `UnresolvedManifest` IR.
-    pub fn into_unresolved(&self) -> UnresolvedManifest {
-        let deps = self
-            .modules
-            .iter()
-            .map(|(name, m)| {
-                let dep = UnresolvedDep {
-                    name: name.clone(),
-                    url: m.git.clone(),
-                    revision: m.rev.clone(),
-                    path: name.clone(),
-                    import: ImportSpec::None, // east.toml is already flat
-                };
-                (name.clone(), dep)
-            })
-            .collect();
-
-        UnresolvedManifest {
-            self_url: None,
-            self_revision: None,
-            self_import: ImportSpec::None,
-            deps,
-        }
-    }
+    ///// Lower an east.toml into the common `UnresolvedManifest` IR.
+    //pub fn into_unresolved(&self) -> UnresolvedManifest {
+    //    let deps = self
+    //        .modules
+    //        .iter()
+    //        .map(|(name, m)| {
+    //            let dep = UnresolvedDep {
+    //                name: name.clone(),
+    //                url: m.git.clone(),
+    //                revision: m.rev.clone(),
+    //                path: name.clone(),
+    //                import: ImportSpec::None, // east.toml is already flat
+    //            };
+    //            (name.clone(), dep)
+    //        })
+    //        .collect();
+//
+    //    UnresolvedManifest {
+    //        self_url: None,
+    //        self_revision: None,
+    //        self_import: ImportSpec::None,
+    //        deps,
+    //    }
+    //}
 }
 
 #[derive(Debug, Deserialize)]

@@ -6,7 +6,6 @@ use crate::config::{
     Module,
     Workspace
 };
-use crate::manifest::{UnresolvedManifest, UnresolvedDep, ImportSpec};
 
 #[derive(Debug, Deserialize)]
 pub struct Remote {
@@ -237,70 +236,70 @@ impl West {
         Ok(Config { workspace, modules })
     }
 
-    /// Lower a parsed west.yml into the common `UnresolvedManifest` IR.
-    /// `self_url` and `self_rev` identify the repo containing this west.yml
-    /// (needed for resolving `self: import:`).
-    pub fn into_unresolved(
-        &self,
-        self_url: Option<Url>,
-        self_rev: Option<String>,
-    ) -> Result<UnresolvedManifest, WestError> {
-        let manifest = self.manifest();
-        let mut deps = std::collections::BTreeMap::new();
-
-        for prj in &manifest.projects {
-            let default_remote = manifest.defaults.remote.as_ref();
-
-            let url = match (&prj.url, &prj.remote, default_remote) {
-                (Some(u), None, _) => u.clone(),
-                (None, Some(r), _) | (None, None, Some(r)) => {
-                    let remote = manifest
-                        .remote(r.as_str())
-                        .ok_or(WestError::DefaultRemoteError(r.to_string()))?;
-                    let base = &remote.url_base;
-                    let repo = prj.repo_path.as_deref().unwrap_or(&prj.name);
-                    base.join(repo).map_err(|_| WestError::BadUrlJoin {
-                        url: base.to_string(),
-                        joinee: repo.to_string(),
-                    })?
-                }
-                (Some(_), Some(_), _) => {
-                    return Err(WestError::InvalidPrjError {
-                        prj: prj.name.clone(),
-                        msg: "cannot have both url and remote".into(),
-                    })
-                }
-                (None, None, None) => {
-                    return Err(WestError::InvalidPrjError {
-                        prj: prj.name.clone(),
-                        msg: "no url or remote and no default remote".into(),
-                    })
-                }
-            };
-
-            let revision = prj
-                .revision
-                .clone()
-                .unwrap_or_else(|| manifest.defaults.revision.clone());
-
-            let path = prj.path.clone().unwrap_or_else(|| prj.name.clone());
-            let import = import_to_spec(&prj.import);
-
-            deps.insert(
-                prj.name.clone(),
-                UnresolvedDep { name: prj.name.clone(), url, revision, path, import },
-            );
-        }
-
-        let self_import = import_to_spec(&manifest.manifest_self.import);
-
-        Ok(UnresolvedManifest {
-            self_url,
-            self_revision: self_rev,
-            self_import,
-            deps,
-        })
-    }
+//    /// Lower a parsed west.yml into the common `UnresolvedManifest` IR.
+//    /// `self_url` and `self_rev` identify the repo containing this west.yml
+//    /// (needed for resolving `self: import:`).
+//    pub fn into_unresolved(
+//        &self,
+//        self_url: Option<Url>,
+//        self_rev: Option<String>,
+//    ) -> Result<UnresolvedManifest, WestError> {
+//        let manifest = self.manifest();
+//        let mut deps = std::collections::BTreeMap::new();
+//
+//        for prj in &manifest.projects {
+//            let default_remote = manifest.defaults.remote.as_ref();
+//
+//            let url = match (&prj.url, &prj.remote, default_remote) {
+//                (Some(u), None, _) => u.clone(),
+//                (None, Some(r), _) | (None, None, Some(r)) => {
+//                    let remote = manifest
+//                        .remote(r.as_str())
+//                        .ok_or(WestError::DefaultRemoteError(r.to_string()))?;
+//                    let base = &remote.url_base;
+//                    let repo = prj.repo_path.as_deref().unwrap_or(&prj.name);
+//                    base.join(repo).map_err(|_| WestError::BadUrlJoin {
+//                        url: base.to_string(),
+//                        joinee: repo.to_string(),
+//                    })?
+//                }
+//                (Some(_), Some(_), _) => {
+//                    return Err(WestError::InvalidPrjError {
+//                        prj: prj.name.clone(),
+//                        msg: "cannot have both url and remote".into(),
+//                    })
+//                }
+//                (None, None, None) => {
+//                    return Err(WestError::InvalidPrjError {
+//                        prj: prj.name.clone(),
+//                        msg: "no url or remote and no default remote".into(),
+//                    })
+//                }
+//            };
+//
+//            let revision = prj
+//                .revision
+//                .clone()
+//                .unwrap_or_else(|| manifest.defaults.revision.clone());
+//
+//            let path = prj.path.clone().unwrap_or_else(|| prj.name.clone());
+//            let import = import_to_spec(&prj.import);
+//
+//            deps.insert(
+//                prj.name.clone(),
+//                UnresolvedDep { name: prj.name.clone(), url, revision, path, import },
+//            );
+//        }
+//
+//        let self_import = import_to_spec(&manifest.manifest_self.import);
+//
+//        Ok(UnresolvedManifest {
+//            self_url,
+//            self_revision: self_rev,
+//            self_import,
+//            deps,
+//        })
+//    }
 }
 
 fn one_or_seq_to_vec(o: &OneOrSeq<String>) -> Vec<String> {
@@ -310,29 +309,29 @@ fn one_or_seq_to_vec(o: &OneOrSeq<String>) -> Vec<String> {
     }
 }
 
-fn import_to_spec(import: &Import) -> ImportSpec {
-    match import {
-        Import::Bool(false) => ImportSpec::None,
-        Import::Bool(true) => ImportSpec::File("west.yml".into()),
-        Import::RelPath(p) => ImportSpec::File(p.clone()),
-        Import::Seq(paths) => ImportSpec::Files(paths.clone()),
-        Import::Mapping {
-            file,
-            name_allow_list,
-            name_block_list,
-            path_allow_list,
-            path_block_list,
-            path_prefix,
-        } => ImportSpec::Filtered {
-            file: file.clone(),
-            name_allowlist: name_allow_list.as_ref().map(one_or_seq_to_vec),
-            name_blocklist: name_block_list.as_ref().map(one_or_seq_to_vec),
-            path_allowlist: path_allow_list.as_ref().map(one_or_seq_to_vec),
-            path_blocklist: path_block_list.as_ref().map(one_or_seq_to_vec),
-            path_prefix: path_prefix.clone(),
-        },
-    }
-}
+//fn import_to_spec(import: &Import) -> ImportSpec {
+//    match import {
+//        Import::Bool(false) => ImportSpec::None,
+//        Import::Bool(true) => ImportSpec::File("west.yml".into()),
+//        Import::RelPath(p) => ImportSpec::File(p.clone()),
+//        Import::Seq(paths) => ImportSpec::Files(paths.clone()),
+//        Import::Mapping {
+//            file,
+//            name_allow_list,
+//            name_block_list,
+//            path_allow_list,
+//            path_block_list,
+//            path_prefix,
+//        } => ImportSpec::Filtered {
+//            file: file.clone(),
+//            name_allowlist: name_allow_list.as_ref().map(one_or_seq_to_vec),
+//            name_blocklist: name_block_list.as_ref().map(one_or_seq_to_vec),
+//            path_allowlist: path_allow_list.as_ref().map(one_or_seq_to_vec),
+//            path_blocklist: path_block_list.as_ref().map(one_or_seq_to_vec),
+//            path_prefix: path_prefix.clone(),
+//        },
+//    }
+//}
 
 #[cfg(test)]
 mod tests {
